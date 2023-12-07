@@ -7,7 +7,7 @@ func getPatchPageUrl(host string) string {
 }
 
 func getDevicePageUrl(host string) string {
-	return fmt.Sprintf("http://%s:8080/html/ssmp/devmanage/e8cdevicemanormal.asp", host)
+	return fmt.Sprintf("http://%s:8080/html/ssmp/devmanage/e8cdevicemanagement.asp", host)
 }
 
 func getLoginUrl(host string) string {

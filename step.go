@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	neturl "net/url"
 	"regexp"
@@ -28,7 +28,7 @@ func GetRandCount(url string) (string, error) {
 		return "", fmt.Errorf("get randCount with wrong status code: %d", resp.StatusCode)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("read from readCount response failed: %s", err)
 	}
@@ -63,7 +63,7 @@ func LoginAndGetCookie(url string, username, password, randCount string) (*http.
 		return nil, fmt.Errorf("login failed: credential may wrong")
 	}
 
-	for i, _ := range cookies {
+	for i := range cookies {
 		cookie := cookies[i]
 
 		if cookie.Path == "/" {
@@ -98,7 +98,7 @@ func GetDevicePageRandCount(url string, cookie *http.Cookie) (string, error) {
 		return "", fmt.Errorf("get device manage page randCount with wrong status code: %d", resp.StatusCode)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("read body from device manage page response failed: %s", err)
 	}

@@ -1,1 +1,7 @@
 /bin/
+.env
+/.workbuddy
+
+# 本地编译产物
+/rebootTelecom
+/rebootTelecom.exe

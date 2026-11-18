@@ -10,9 +10,31 @@
 
 ## 验证环境
 
-手边只有电信定制的华为HN8145V的设备，固件版本号为21HWW41930010 。
+* 原设备：电信定制的华为 HN8145V，固件版本号 21HWW41930010。
+* 新设备：电信定制的光猫（`ty_httpd` 服务，登录页标识 `SCTY` / `GuangXi`，8080 端口），已适配。
 
-其他机器请自行测试~
+**注意**：两代光猫的 Web 协议完全不同，当前代码针对**新光猫**实现。旧 HN8145V 已不再支持。
+
+### 新旧协议差异（供参考）
+
+| 步骤 | 旧华为 HN8145V | 新光猫（ty_httpd） |
+| --- | --- | --- |
+| 取 token | `POST /asp/GetRandCount.asp` | `GET /login.html` 中提取 `sessionKey` |
+| 登录字段 | `UserName` / `PassWord` / `x.X_HW_Token` | `username` / `password`(base64) / `sessionKey` |
+| 会话维持 | Cookie | 无 Cookie，靠源 IP |
+| 设备管理页 | `/html/ssmp/devmanage/e8cdevicemanagement.asp` | `/MD_Device.html`（管理员）/ `/MD_Device_user.html`（非管理员） |
+| 重启接口 | `POST set.cgi?...ResetBoard` | `GET /rebootinfo.cgi?setN_sessionKey=...` |
+
+### 管理员 / 非管理员账户
+
+两类账户都能重启，但**设备管理页和 token 参数名不同**，程序会根据登录主页里的 `curuser` 自动识别账户类型并选用对应页面：
+
+| 账户 | 设备管理页 | 重启 token 参数 |
+| --- | --- | --- |
+| `telecomadmin` / `admin`（管理员） | `/MD_Device.html` | `set6_sessionKey=set6_sessionKey_XXX` |
+| `useradmin`（非管理员） | `/MD_Device_user.html` | `set4_sessionKey=set4_sessionKey_XXX` |
+
+注意：非管理员账户访问越权的管理员页面会被重定向到登录页，且可能使会话失效，因此必须按账户类型精准选页，不能逐个试探。
 
 ## 已知问题
 
@@ -37,29 +59,37 @@ main.main()
 
 如下：
 
-```bas
+```bash
 # ./rebootTelecom -h
 Usage of ./rebootTelecom:
+  -dry-run
+        Only verify login and reboot token, do NOT actually reboot
   -host string
-        The host address without port number, such as '192.168.1.1' or 'm.example.com' (default "localhost")
+        The host address without port number, such as '192.168.1.1' (default "localhost")
   -password string
-        The password used to login your HN8145V (default "password")
+        The password used to login your ONU (default "password")
   -username string
-        The username used to login your HN8145V (default "username")
+        The username used to login your ONU (default "username")
 ```
 
-只需要三个控制台参数，对应分别是：
+需要三个控制台参数，对应分别是：
 
 * 主机地址。请直接填地址**不要带端口号**，比如：192.168.1.1
 * 密码
 * 用户名
+
+另外提供一个安全参数 `-dry-run`，只验证登录与重启 token 是否都正常、**不会真正重启**，可用于部署前的连通性测试。
 
 需要注意的是，这个用户名和密码需要是能登录进去半超管界面的。**请打开你的机器的8080端口的页面**，**而不是默认的80端口页面**，尝试使用凭据登录，如果能登录成功，再将凭据填写到此处即可。
 
 执行实例：
 
 ```bash
-./rebootTelecom -host "主机地址" -username "用户名" -password "密码" 
+# 真正触发重启
+./rebootTelecom -host "主机地址" -username "用户名" -password "密码"
+
+# 仅验证登录和 token，不重启（推荐先跑这个确认适配成功）
+./rebootTelecom -host "主机地址" -username "用户名" -password "密码" -dry-run
 ```
 
 ## 定时方式
